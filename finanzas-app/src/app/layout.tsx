@@ -13,6 +13,12 @@ export const metadata: Metadata = {
   title: "Finanzas — control de gastos e ingresos",
   description: "App de finanzas personales local-first: rápida, privada y sin nubes de por medio.",
   manifest: "/manifest.json",
+  icons: {
+    // Coloca tu logo.png en /public/logo.png — si aún no existe, el navegador
+    // simplemente lo ignora y no rompe nada.
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export const viewport: Viewport = {

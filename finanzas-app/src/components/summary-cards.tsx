@@ -24,7 +24,7 @@ export function SummaryCards({ balance, ingresos, gastos, moneda }: Props) {
         </div>
         <p
           className={cn(
-            "font-mono-tabular mt-3 text-4xl font-semibold",
+            "font-mono-tabular mt-3 break-words text-3xl font-semibold sm:text-4xl",
             balance >= 0 ? "text-[var(--ingreso)]" : "text-[var(--gasto)]"
           )}
         >

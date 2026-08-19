@@ -135,7 +135,7 @@ function FormularioInterno({
       {/* Importe grande, protagonista */}
       <div>
         <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Importe</label>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <span className="font-mono-tabular text-2xl text-[var(--muted)]">€</span>
           <input
             autoFocus

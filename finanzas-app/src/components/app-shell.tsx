@@ -17,6 +17,7 @@ import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { QuickAddFab } from "@/components/quick-add-fab";
 import { TransactionForm } from "@/components/transaction-form";
+import { Logo } from "@/components/logo";
 
 const NAV = [
   { href: "/", label: "Resumen", icon: LayoutDashboard },
@@ -37,9 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Navegación lateral — escritorio */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface)] px-4 py-6 lg:flex">
         <div className="mb-8 flex items-center gap-2 px-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] font-display text-sm font-bold text-[#0a0d12]">
-            F
-          </div>
+          <Logo tamano={32} />
           <span className="font-display text-lg font-semibold">Finanzas</span>
         </div>
         <nav className="flex flex-1 flex-col gap-1">
@@ -75,9 +74,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Barra superior — móvil */}
         <header className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-4 py-3 lg:hidden">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent)] font-display text-xs font-bold text-[#0a0d12]">
-              F
-            </div>
+            <Logo tamano={28} />
             <span className="font-display text-base font-semibold">Finanzas</span>
           </div>
           <button
