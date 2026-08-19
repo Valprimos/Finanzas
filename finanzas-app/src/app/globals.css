@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-display: var(--font-outfit);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+
+  --color-ingreso: var(--ingreso);
+  --color-ingreso-soft: var(--ingreso-soft);
+  --color-gasto: var(--gasto);
+  --color-gasto-soft: var(--gasto-soft);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+}
+
+:root {
+  /* Paleta "ledger": tinta profunda + verde libro-mayor + coral de gasto */
+  --background: #0a0d12;
+  --surface: #10141b;
+  --surface-2: #161b24;
+  --border: #232a36;
+  --foreground: #eef1f6;
+  --muted: #8892a4;
+
+  --ingreso: #35d99a;
+  --ingreso-soft: rgba(53, 217, 154, 0.12);
+  --gasto: #ff6b5e;
+  --gasto-soft: rgba(255, 107, 94, 0.12);
+  --accent: #7c9eff;
+  --accent-soft: rgba(124, 158, 255, 0.12);
+}
+
+.claro {
+  --background: #f7f7f5;
+  --surface: #ffffff;
+  --surface-2: #f0f1ee;
+  --border: #e3e4e0;
+  --foreground: #14171c;
+  --muted: #656d7a;
+
+  --ingreso: #0f9d63;
+  --ingreso-soft: rgba(15, 157, 99, 0.1);
+  --gasto: #d9463a;
+  --gasto-soft: rgba(217, 70, 58, 0.1);
+  --accent: #3f5fd6;
+  --accent-soft: rgba(63, 95, 214, 0.1);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: dark;
+}
+html.claro {
+  color-scheme: light;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-mono-tabular {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+@keyframes subir-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animar-entrada {
+  animation: subir-entrada 0.28s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

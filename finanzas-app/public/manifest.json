@@ -1,0 +1,10 @@
+{
+  "name": "Finanzas — control de gastos e ingresos",
+  "short_name": "Finanzas",
+  "description": "App de finanzas personales local-first: privada, rápida y sin nubes de por medio.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0d12",
+  "theme_color": "#0a0d12",
+  "icons": []
+}
