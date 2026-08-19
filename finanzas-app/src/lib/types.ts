@@ -26,6 +26,7 @@ export interface Transaction {
   descripcion?: string;
   metodoPago?: string;
   cuentaId?: string;
+  etiquetas?: string[];
   recurrenteId?: string; // si viene de una regla recurrente
   creadoEn: string;
   actualizadoEn: string;
@@ -62,6 +63,22 @@ export interface AppSettings {
   nombreUsuario?: string;
 }
 
+export interface SavingsGoal {
+  id: string;
+  nombre: string;
+  objetivo: number;
+  fechaLimite?: string; // ISO yyyy-MM-dd
+  creadoEn: string;
+}
+
+export interface SavingsContribution {
+  id: string;
+  metaId: string;
+  importe: number;
+  fecha: string; // ISO yyyy-MM-dd
+  nota?: string;
+}
+
 export interface BackupData {
   version: number;
   exportadoEn: string;
@@ -70,5 +87,7 @@ export interface BackupData {
   cuentas: Account[];
   presupuestos: Budget[];
   recurrentes: RecurringRule[];
+  metasAhorro: SavingsGoal[];
+  aportaciones: SavingsContribution[];
   ajustes: AppSettings;
 }

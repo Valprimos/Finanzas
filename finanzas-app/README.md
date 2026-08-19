@@ -132,8 +132,13 @@ Todo vive en `src/lib/types.ts` y se persiste como arrays serializables en Index
 - **Resumen**: balance, ingresos y gastos totales del mes, con navegación mes a mes.
 - **Estadísticas**: evolución mensual, ingresos vs. gastos, gasto por categoría (donut), top categorías.
 - **Presupuestos** por categoría con barra de progreso y aviso cuando llegas al 80% o te pasas.
+- **Objetivos de ahorro**: define una meta (ej. "2000 € para diciembre") y ve añadiendo aportaciones a mano; independiente de los presupuestos.
+- **Comparativa mensual**: en el resumen se ve automáticamente cuánto han subido o bajado tus gastos e ingresos respecto al mes anterior.
+- **Etiquetas**: además de la categoría, cada movimiento admite etiquetas libres (ej. "viaje portugal") que cruzan varias categorías. Se pueden filtrar en la lista de movimientos.
+- **Calendario de gasto**: en Estadísticas, un calendario mensual con un punto de color por día (bajo/medio/alto) según cuánto gastaste ese día en relación con tu media del mes.
 - **Recurrentes**: gastos e ingresos que se generan solos (diaria/semanal/mensual/anual), con pausa/activación.
-- **Exportar/importar**: backup completo en JSON y movimientos en CSV.
+- **Exportar/importar**: backup completo en JSON y movimientos en CSV (incluye etiquetas).
+- **Logo con modo oscuro/claro**: coloca `logo.png` (modo claro) y `logoclaro.png` (modo oscuro) en `/public` — la app elige el correcto automáticamente.
 - **Modo oscuro** (por defecto) **y claro**, con paleta y tipografía cuidadas específicamente para esta app.
 - **Responsive**: navegación lateral en escritorio, barra inferior + FAB en móvil.
 

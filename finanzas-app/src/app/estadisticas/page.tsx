@@ -5,6 +5,7 @@ import { TendenciaMensual } from "@/components/charts/tendencia-mensual";
 import { GastoPorCategoria } from "@/components/charts/gasto-por-categoria";
 import { IngresosVsGastos } from "@/components/charts/ingresos-vs-gastos";
 import { TopCategorias } from "@/components/top-categorias";
+import { CalendarioGastos } from "@/components/calendario-gastos";
 
 export default function PaginaEstadisticas() {
   const { transacciones, categorias, ajustes } = useFinanzas();
@@ -27,6 +28,8 @@ export default function PaginaEstadisticas() {
         <TopCategorias transacciones={transacciones} categorias={categorias} moneda={ajustes.moneda} tipo="gasto" />
         <TopCategorias transacciones={transacciones} categorias={categorias} moneda={ajustes.moneda} tipo="ingreso" />
       </div>
+
+      <CalendarioGastos />
     </div>
   );
 }

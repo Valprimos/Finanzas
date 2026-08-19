@@ -15,6 +15,8 @@ import type {
   Account,
   Budget,
   RecurringRule,
+  SavingsGoal,
+  SavingsContribution,
   AppSettings,
   BackupData,
 } from "./types";
@@ -36,6 +38,8 @@ interface FinanzasContexto {
   cuentas: Account[];
   presupuestos: Budget[];
   recurrentes: RecurringRule[];
+  metasAhorro: SavingsGoal[];
+  aportaciones: SavingsContribution[];
   ajustes: AppSettings;
 
   agregarTransaccion: (t: Omit<Transaction, "id" | "creadoEn" | "actualizadoEn">) => Promise<void>;
@@ -54,6 +58,13 @@ interface FinanzasContexto {
   actualizarRecurrente: (id: string, cambios: Partial<RecurringRule>) => Promise<void>;
   eliminarRecurrente: (id: string) => Promise<void>;
 
+  agregarMeta: (m: Omit<SavingsGoal, "id" | "creadoEn">) => Promise<void>;
+  actualizarMeta: (id: string, cambios: Partial<SavingsGoal>) => Promise<void>;
+  eliminarMeta: (id: string) => Promise<void>;
+
+  agregarAportacion: (a: Omit<SavingsContribution, "id">) => Promise<void>;
+  eliminarAportacion: (id: string) => Promise<void>;
+
   actualizarAjustes: (cambios: Partial<AppSettings>) => Promise<void>;
 
   exportarTodo: () => Promise<BackupData>;
@@ -70,6 +81,8 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
   const [cuentas, setCuentasState] = useState<Account[]>([]);
   const [presupuestos, setPresupuestosState] = useState<Budget[]>([]);
   const [recurrentes, setRecurrentesState] = useState<RecurringRule[]>([]);
+  const [metasAhorro, setMetasAhorroState] = useState<SavingsGoal[]>([]);
+  const [aportaciones, setAportacionesState] = useState<SavingsContribution[]>([]);
   const [ajustes, setAjustesState] = useState<AppSettings>(AJUSTES_POR_DEFECTO);
 
   // Carga inicial desde IndexedDB + generación de recurrentes pendientes
@@ -80,11 +93,13 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
         cats = CATEGORIAS_PREDETERMINADAS;
         await db.setCategorias(cats);
       }
-      const [txs, accs, pres, recs, ajus] = await Promise.all([
+      const [txs, accs, pres, recs, metas, aportes, ajus] = await Promise.all([
         db.getTransacciones(),
         db.getCuentas(),
         db.getPresupuestos(),
         db.getRecurrentes(),
+        db.getMetasAhorro(),
+        db.getAportaciones(),
         db.getAjustes(AJUSTES_POR_DEFECTO),
       ]);
 
@@ -114,6 +129,8 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
       setCuentasState(accs);
       setPresupuestosState(pres);
       setRecurrentesState(recsFinal);
+      setMetasAhorroState(metas);
+      setAportacionesState(aportes);
       setAjustesState(ajus);
       setCargado(true);
     })();
@@ -222,6 +239,52 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const agregarMeta = useCallback(async (m: Omit<SavingsGoal, "id" | "creadoEn">) => {
+    setMetasAhorroState((prev) => {
+      const siguiente = [...prev, { ...m, id: uuid(), creadoEn: new Date().toISOString() }];
+      db.setMetasAhorro(siguiente);
+      return siguiente;
+    });
+  }, []);
+
+  const actualizarMeta = useCallback(async (id: string, cambios: Partial<SavingsGoal>) => {
+    setMetasAhorroState((prev) => {
+      const siguiente = prev.map((m) => (m.id === id ? { ...m, ...cambios } : m));
+      db.setMetasAhorro(siguiente);
+      return siguiente;
+    });
+  }, []);
+
+  const eliminarMeta = useCallback(async (id: string) => {
+    setMetasAhorroState((prev) => {
+      const siguiente = prev.filter((m) => m.id !== id);
+      db.setMetasAhorro(siguiente);
+      return siguiente;
+    });
+    // Al borrar una meta, sus aportaciones huérfanas también se eliminan
+    setAportacionesState((prev) => {
+      const siguiente = prev.filter((a) => a.metaId !== id);
+      db.setAportaciones(siguiente);
+      return siguiente;
+    });
+  }, []);
+
+  const agregarAportacion = useCallback(async (a: Omit<SavingsContribution, "id">) => {
+    setAportacionesState((prev) => {
+      const siguiente = [...prev, { ...a, id: uuid() }];
+      db.setAportaciones(siguiente);
+      return siguiente;
+    });
+  }, []);
+
+  const eliminarAportacion = useCallback(async (id: string) => {
+    setAportacionesState((prev) => {
+      const siguiente = prev.filter((a) => a.id !== id);
+      db.setAportaciones(siguiente);
+      return siguiente;
+    });
+  }, []);
+
   const actualizarAjustes = useCallback(async (cambios: Partial<AppSettings>) => {
     setAjustesState((prev) => {
       const siguiente = { ...prev, ...cambios };
@@ -239,6 +302,8 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
     setCuentasState(data.cuentas ?? []);
     setPresupuestosState(data.presupuestos ?? []);
     setRecurrentesState(data.recurrentes ?? []);
+    setMetasAhorroState(data.metasAhorro ?? []);
+    setAportacionesState(data.aportaciones ?? []);
     if (data.ajustes) setAjustesState(data.ajustes);
   }, []);
 
@@ -249,6 +314,8 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
     setCuentasState([]);
     setPresupuestosState([]);
     setRecurrentesState([]);
+    setMetasAhorroState([]);
+    setAportacionesState([]);
     await db.setCategorias(CATEGORIAS_PREDETERMINADAS);
   }, []);
 
@@ -261,6 +328,8 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
         cuentas,
         presupuestos,
         recurrentes,
+        metasAhorro,
+        aportaciones,
         ajustes,
         agregarTransaccion,
         actualizarTransaccion,
@@ -274,6 +343,11 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
         agregarRecurrente,
         actualizarRecurrente,
         eliminarRecurrente,
+        agregarMeta,
+        actualizarMeta,
+        eliminarMeta,
+        agregarAportacion,
+        eliminarAportacion,
         actualizarAjustes,
         exportarTodo,
         importarTodo,

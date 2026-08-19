@@ -19,7 +19,7 @@ export function exportarBackupJSON(data: BackupData) {
 
 export function exportarTransaccionesCSV(transacciones: Transaction[], categorias: Category[]) {
   const mapaCategorias = new Map(categorias.map((c) => [c.id, c.nombre]));
-  const cabecera = ["fecha", "tipo", "categoria", "importe", "descripcion", "metodoPago", "cuentaId"];
+  const cabecera = ["fecha", "tipo", "categoria", "importe", "descripcion", "metodoPago", "cuentaId", "etiquetas"];
   const filas = transacciones.map((t) =>
     [
       t.fecha,
@@ -29,6 +29,7 @@ export function exportarTransaccionesCSV(transacciones: Transaction[], categoria
       escaparCSV(t.descripcion ?? ""),
       t.metodoPago ?? "",
       t.cuentaId ?? "",
+      escaparCSV((t.etiquetas ?? []).join(";")),
     ].join(",")
   );
   const csv = [cabecera.join(","), ...filas].join("\n");

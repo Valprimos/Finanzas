@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { useFinanzas } from "@/lib/store";
 import { SummaryCards } from "@/components/summary-cards";
+import { ComparativaMensual } from "@/components/comparativa-mensual";
+import { SavingsGoalCard } from "@/components/savings-goal-card";
 import { TendenciaMensual } from "@/components/charts/tendencia-mensual";
 import { GastoPorCategoria } from "@/components/charts/gasto-por-categoria";
 import { TopCategorias } from "@/components/top-categorias";
@@ -13,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function PaginaInicio() {
-  const { transacciones, categorias, presupuestos, ajustes, cargado } = useFinanzas();
+  const { transacciones, categorias, presupuestos, metasAhorro, aportaciones, ajustes, cargado } = useFinanzas();
   const [mesOffset, setMesOffset] = useState(0);
 
   const { mesKey, etiquetaMes } = useMemo(() => {
@@ -66,6 +68,8 @@ export default function PaginaInicio() {
 
       <SummaryCards balance={ingresos - gastos} ingresos={ingresos} gastos={gastos} moneda={ajustes.moneda} />
 
+      <ComparativaMensual transacciones={transacciones} mesKey={mesKey} moneda={ajustes.moneda} />
+
       {estadoPresupuestos.length > 0 && (
         <div className="space-y-2">
           {estadoPresupuestos.map((e) => {
@@ -91,6 +95,8 @@ export default function PaginaInicio() {
           })}
         </div>
       )}
+
+      <SavingsGoalCard metas={metasAhorro} aportaciones={aportaciones} moneda={ajustes.moneda} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">

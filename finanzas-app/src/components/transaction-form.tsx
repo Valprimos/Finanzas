@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { TagInput } from "@/components/ui/tag-input";
 import { useFinanzas } from "@/lib/store";
 import { hoyISO } from "@/lib/format";
 import type { Transaction, TransactionType } from "@/lib/types";
@@ -62,6 +63,7 @@ function FormularioInterno({
   const [descripcion, setDescripcion] = useState(transaccionExistente?.descripcion ?? "");
   const [metodoPago, setMetodoPago] = useState(transaccionExistente?.metodoPago ?? "");
   const [cuentaId, setCuentaId] = useState(transaccionExistente?.cuentaId ?? "");
+  const [etiquetas, setEtiquetas] = useState<string[]>(transaccionExistente?.etiquetas ?? []);
   const [error, setError] = useState("");
 
   const categoriasFiltradas = categorias.filter((c) => c.tipo === tipo);
@@ -94,6 +96,7 @@ function FormularioInterno({
       descripcion: descripcion.trim() || undefined,
       metodoPago: metodoPago || undefined,
       cuentaId: cuentaId || undefined,
+      etiquetas: etiquetas.length > 0 ? etiquetas : undefined,
     };
 
     if (transaccionExistente) {
@@ -205,6 +208,13 @@ function FormularioInterno({
             ))}
           </Select>
         </div>
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
+          Etiquetas <span className="text-[var(--muted)]">(opcional)</span>
+        </label>
+        <TagInput etiquetas={etiquetas} onCambiar={setEtiquetas} placeholder="ej. viaje portugal" />
       </div>
 
       {error && <p className="text-sm text-[var(--gasto)]">{error}</p>}

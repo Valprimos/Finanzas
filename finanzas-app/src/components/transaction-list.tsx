@@ -18,6 +18,7 @@ export function TransactionList() {
   const [busqueda, setBusqueda] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<"todos" | "gasto" | "ingreso">("todos");
   const [filtroCategoria, setFiltroCategoria] = useState("todas");
+  const [filtroEtiqueta, setFiltroEtiqueta] = useState("todas");
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
   const [orden, setOrden] = useState<Orden>("fecha_desc");
@@ -25,18 +26,30 @@ export function TransactionList() {
 
   const mapaCategorias = useMemo(() => new Map(categorias.map((c) => [c.id, c])), [categorias]);
 
+  const todasLasEtiquetas = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of transacciones) {
+      t.etiquetas?.forEach((e) => set.add(e));
+    }
+    return Array.from(set).sort();
+  }, [transacciones]);
+
   const filtradas = useMemo(() => {
     let resultado = transacciones.filter((t) => {
       const categoria = mapaCategorias.get(t.categoriaId);
       const coincideBusqueda =
         !busqueda ||
         t.descripcion?.toLowerCase().includes(busqueda.toLowerCase()) ||
-        categoria?.nombre.toLowerCase().includes(busqueda.toLowerCase());
+        categoria?.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+        t.etiquetas?.some((e) => e.includes(busqueda.toLowerCase()));
       const coincideTipo = filtroTipo === "todos" || t.tipo === filtroTipo;
       const coincideCategoria = filtroCategoria === "todas" || t.categoriaId === filtroCategoria;
+      const coincideEtiqueta = filtroEtiqueta === "todas" || (t.etiquetas ?? []).includes(filtroEtiqueta);
       const coincideDesde = !desde || t.fecha >= desde;
       const coincideHasta = !hasta || t.fecha <= hasta;
-      return coincideBusqueda && coincideTipo && coincideCategoria && coincideDesde && coincideHasta;
+      return (
+        coincideBusqueda && coincideTipo && coincideCategoria && coincideEtiqueta && coincideDesde && coincideHasta
+      );
     });
 
     resultado = resultado.sort((a, b) => {
@@ -53,7 +66,7 @@ export function TransactionList() {
     });
 
     return resultado;
-  }, [transacciones, busqueda, filtroTipo, filtroCategoria, desde, hasta, orden, mapaCategorias]);
+  }, [transacciones, busqueda, filtroTipo, filtroCategoria, filtroEtiqueta, desde, hasta, orden, mapaCategorias]);
 
   return (
     <div className="space-y-4">
@@ -61,13 +74,13 @@ export function TransactionList() {
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
           <Input
-            placeholder="Buscar por descripción o categoría…"
+            placeholder="Buscar por descripción, categoría o etiqueta…"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="pl-9"
           />
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value as typeof filtroTipo)}>
             <option value="todos">Todos los tipos</option>
             <option value="gasto">Gastos</option>
@@ -81,6 +94,16 @@ export function TransactionList() {
               </option>
             ))}
           </Select>
+          {todasLasEtiquetas.length > 0 && (
+            <Select value={filtroEtiqueta} onChange={(e) => setFiltroEtiqueta(e.target.value)}>
+              <option value="todas">Todas las etiquetas</option>
+              {todasLasEtiquetas.map((e) => (
+                <option key={e} value={e}>
+                  #{e}
+                </option>
+              ))}
+            </Select>
+          )}
           <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} title="Desde" />
           <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} title="Hasta" />
           <Select value={orden} onChange={(e) => setOrden(e.target.value as Orden)}>
@@ -119,10 +142,22 @@ export function TransactionList() {
                       <p className="truncate text-sm font-medium">
                         {t.descripcion || categoria?.nombre || "Movimiento"}
                       </p>
-                      <p className="text-xs text-[var(--muted)]">
+                      <p className="truncate text-xs text-[var(--muted)]">
                         {categoria?.nombre} · {formatearFecha(t.fecha)}
                         {t.metodoPago ? ` · ${t.metodoPago}` : ""}
                       </p>
+                      {t.etiquetas && t.etiquetas.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {t.etiquetas.map((e) => (
+                            <span
+                              key={e}
+                              className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent)]"
+                            >
+                              #{e}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <span
                       className={cn(

@@ -5,6 +5,8 @@ import type {
   Account,
   Budget,
   RecurringRule,
+  SavingsGoal,
+  SavingsContribution,
   AppSettings,
   BackupData,
 } from "./types";
@@ -22,6 +24,8 @@ const KEYS = {
   cuentas: "finanzas:cuentas",
   presupuestos: "finanzas:presupuestos",
   recurrentes: "finanzas:recurrentes",
+  metasAhorro: "finanzas:metasAhorro",
+  aportaciones: "finanzas:aportaciones",
   ajustes: "finanzas:ajustes",
 } as const;
 
@@ -75,6 +79,18 @@ export const db = {
   async setRecurrentes(data: RecurringRule[]): Promise<void> {
     return escribir(KEYS.recurrentes, data);
   },
+  async getMetasAhorro(): Promise<SavingsGoal[]> {
+    return leer(KEYS.metasAhorro, []);
+  },
+  async setMetasAhorro(data: SavingsGoal[]): Promise<void> {
+    return escribir(KEYS.metasAhorro, data);
+  },
+  async getAportaciones(): Promise<SavingsContribution[]> {
+    return leer(KEYS.aportaciones, []);
+  },
+  async setAportaciones(data: SavingsContribution[]): Promise<void> {
+    return escribir(KEYS.aportaciones, data);
+  },
   async getAjustes(defaultAjustes: AppSettings): Promise<AppSettings> {
     return leer(KEYS.ajustes, defaultAjustes);
   },
@@ -82,23 +98,35 @@ export const db = {
     return escribir(KEYS.ajustes, data);
   },
   async exportarTodo(): Promise<BackupData> {
-    const [transacciones, categorias, cuentas, presupuestos, recurrentes, ajustes] =
-      await Promise.all([
-        this.getTransacciones(),
-        this.getCategorias(),
-        this.getCuentas(),
-        this.getPresupuestos(),
-        this.getRecurrentes(),
-        get<AppSettings>(KEYS.ajustes),
-      ]);
+    const [
+      transacciones,
+      categorias,
+      cuentas,
+      presupuestos,
+      recurrentes,
+      metasAhorro,
+      aportaciones,
+      ajustes,
+    ] = await Promise.all([
+      this.getTransacciones(),
+      this.getCategorias(),
+      this.getCuentas(),
+      this.getPresupuestos(),
+      this.getRecurrentes(),
+      this.getMetasAhorro(),
+      this.getAportaciones(),
+      get<AppSettings>(KEYS.ajustes),
+    ]);
     return {
-      version: 1,
+      version: 2,
       exportadoEn: new Date().toISOString(),
       transacciones,
       categorias,
       cuentas,
       presupuestos,
       recurrentes,
+      metasAhorro,
+      aportaciones,
       ajustes: ajustes ?? { moneda: "EUR", localeFormato: "es-ES", tema: "oscuro" },
     };
   },
@@ -109,6 +137,8 @@ export const db = {
       escribir(KEYS.cuentas, data.cuentas ?? []),
       escribir(KEYS.presupuestos, data.presupuestos ?? []),
       escribir(KEYS.recurrentes, data.recurrentes ?? []),
+      escribir(KEYS.metasAhorro, data.metasAhorro ?? []),
+      escribir(KEYS.aportaciones, data.aportaciones ?? []),
       escribir(KEYS.ajustes, data.ajustes),
     ]);
   },
