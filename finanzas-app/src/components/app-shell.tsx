@@ -90,7 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </button>
       </aside>
 
-      <div className="flex min-h-dvh flex-1 flex-col">
+      <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
         {/* Barra superior — móvil */}
         <header className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-4 py-3 lg:hidden">
           <div className="flex items-center gap-2">
