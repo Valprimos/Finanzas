@@ -85,10 +85,33 @@ export function IngresosVsGastos({ transacciones, moneda }: Props) {
               formatter={(valor) => formatearMoneda(Number(valor), moneda)}
             />
             {seleccion !== "gastos" && (
-              <Bar dataKey="ingresos" fill="var(--ingreso)" radius={[6, 6, 0, 0]} name="Ingresos" />
+              <Bar
+                dataKey="ingresos"
+                fill="var(--ingreso)"
+                radius={[6, 6, 0, 0]}
+                name="Ingresos"
+                cursor="pointer"
+                onClick={(_, __, evento) => {
+                  // Sin esto, el clic en la barra también burbujea hasta el
+                  // onClick del BarChart y lo resetea a "ambas" justo
+                  // después de seleccionar — se anularían entre sí.
+                  evento.stopPropagation();
+                  setSeleccion((actual) => (actual === "ingresos" ? null : "ingresos"));
+                }}
+              />
             )}
             {seleccion !== "ingresos" && (
-              <Bar dataKey="gastos" fill="var(--gasto)" radius={[6, 6, 0, 0]} name="Gastos" />
+              <Bar
+                dataKey="gastos"
+                fill="var(--gasto)"
+                radius={[6, 6, 0, 0]}
+                name="Gastos"
+                cursor="pointer"
+                onClick={(_, __, evento) => {
+                  evento.stopPropagation();
+                  setSeleccion((actual) => (actual === "gastos" ? null : "gastos"));
+                }}
+              />
             )}
           </BarChart>
         </ResponsiveContainer>
