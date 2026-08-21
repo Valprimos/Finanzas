@@ -17,9 +17,11 @@ export function SummaryCards({ balance, ingresos, gastos, moneda }: Props) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {/* Balance — la ficha principal del "libro mayor" */}
-      <div className="animar-entrada relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] p-6 sm:col-span-1">
+      <div className="animar-entrada relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--accent-soft)] to-[var(--surface)] p-6 sm:col-span-1">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-          <Scale size={14} />
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]">
+            <Scale size={14} />
+          </span>
           Balance total
         </div>
         <p
@@ -35,9 +37,11 @@ export function SummaryCards({ balance, ingresos, gastos, moneda }: Props) {
         </p>
       </div>
 
-      <div className="animar-entrada rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
+      <div className="animar-entrada rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--ingreso-soft)] to-[var(--surface)] p-6">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-          <ArrowUpRight size={14} className="text-[var(--ingreso)]" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--ingreso-soft)] text-[var(--ingreso)]">
+            <ArrowUpRight size={14} />
+          </span>
           Ingresos totales
         </div>
         <p className="font-mono-tabular mt-3 text-2xl font-semibold text-[var(--ingreso)]">
@@ -45,9 +49,11 @@ export function SummaryCards({ balance, ingresos, gastos, moneda }: Props) {
         </p>
       </div>
 
-      <div className="animar-entrada rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
+      <div className="animar-entrada rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--gasto-soft)] to-[var(--surface)] p-6">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-          <ArrowDownRight size={14} className="text-[var(--gasto)]" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--gasto-soft)] text-[var(--gasto)]">
+            <ArrowDownRight size={14} />
+          </span>
           Gastos totales
         </div>
         <p className="font-mono-tabular mt-3 text-2xl font-semibold text-[var(--gasto)]">
