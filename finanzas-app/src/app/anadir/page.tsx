@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
@@ -53,9 +53,17 @@ function CapturaRapida() {
   const [resumen, setResumen] = useState<{ importe: number; categoria: string; tipo: TransactionType } | null>(
     null
   );
+  // Guarda si ya se ha lanzado el guardado. Un ref (no estado) porque hace
+  // falta comprobarlo de forma síncrona: en desarrollo, React StrictMode
+  // invoca el efecto dos veces seguidas al montar, antes de que el primer
+  // `agregarTransaccion` (asíncrono) llegue a actualizar el estado — con
+  // solo el estado como guarda, la segunda invocación no se entera a
+  // tiempo y el movimiento se duplica.
+  const yaLanzado = useRef(false);
 
   useEffect(() => {
-    if (!cargado || estado !== "procesando") return;
+    if (!cargado || estado !== "procesando" || yaLanzado.current) return;
+    yaLanzado.current = true;
     let cancelado = false;
 
     async function procesar() {

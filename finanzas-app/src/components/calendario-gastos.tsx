@@ -9,9 +9,11 @@ import { calcularGastoPorDia, type NivelGasto } from "@/lib/calendario";
 import { formatearMoneda } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+// "bajo" usa el acento en vez de verde para no confundirse con el punto
+// de ingreso, que es siempre verde en el resto de la app.
 const COLOR_NIVEL: Record<NivelGasto, string> = {
   "sin-gasto": "transparent",
-  bajo: "var(--ingreso)",
+  bajo: "var(--accent)",
   medio: "#f5a524",
   alto: "var(--gasto)",
 };
@@ -47,7 +49,7 @@ export function CalendarioGastos() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <CalendarDays size={14} /> Calendario de gasto
+            <CalendarDays size={14} /> Calendario de movimientos
           </CardTitle>
           <div className="flex items-center gap-1">
             <Button variante="secundario" tamano="icono" onClick={() => setOffset((o) => o - 1)}>
@@ -83,11 +85,14 @@ export function CalendarioGastos() {
                 )}
               >
                 <span className="text-[var(--foreground)]">{numero}</span>
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: COLOR_NIVEL[dia.nivel] }}
-                  aria-hidden
-                />
+                <span className="flex h-1.5 items-center gap-0.5" aria-hidden>
+                  {dia.nivel !== "sin-gasto" && (
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: COLOR_NIVEL[dia.nivel] }} />
+                  )}
+                  {dia.totalIngresos > 0 && (
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--ingreso)" }} />
+                  )}
+                </span>
               </button>
             );
           })}
@@ -100,19 +105,39 @@ export function CalendarioGastos() {
               {ETIQUETA_NIVEL[nivel]}
             </div>
           ))}
+          <div className="flex items-center gap-1.5 text-[11px] text-[var(--muted)]">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--ingreso)" }} />
+            Ingreso
+          </div>
         </div>
 
-        {diaInfo && (
-          <div className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2.5 text-sm">
-            {diaInfo.total > 0 ? (
-              <span>
-                Gastaste <strong className="font-mono-tabular">{formatearMoneda(diaInfo.total, ajustes.moneda)}</strong>{" "}
+        {diaInfo && (diaInfo.total > 0 || diaInfo.totalIngresos > 0) ? (
+          <div className="mt-3 space-y-1.5 rounded-xl bg-[var(--surface-2)] px-3 py-2.5 text-sm">
+            {diaInfo.total > 0 && (
+              <p>
+                Gastaste{" "}
+                <strong className="font-mono-tabular text-[var(--gasto)]">
+                  {formatearMoneda(diaInfo.total, ajustes.moneda)}
+                </strong>{" "}
                 ese día
-              </span>
-            ) : (
-              <span className="text-[var(--muted)]">Sin gastos registrados ese día</span>
+              </p>
+            )}
+            {diaInfo.totalIngresos > 0 && (
+              <p>
+                Ingresaste{" "}
+                <strong className="font-mono-tabular text-[var(--ingreso)]">
+                  {formatearMoneda(diaInfo.totalIngresos, ajustes.moneda)}
+                </strong>{" "}
+                ese día
+              </p>
             )}
           </div>
+        ) : (
+          diaInfo && (
+            <div className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2.5 text-sm text-[var(--muted)]">
+              Sin movimientos registrados ese día
+            </div>
+          )
         )}
       </CardContent>
     </Card>

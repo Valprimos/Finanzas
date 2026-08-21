@@ -9,12 +9,30 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { formatearMoneda, formatearFecha, hoyISO } from "@/lib/format";
+import { cn } from "@/lib/utils";
+
+/**
+ * Cuánto hay que ahorrar al mes, a partir de hoy, para llegar al objetivo
+ * antes de la fecha límite. Redondea los meses restantes hacia arriba y
+ * nunca deja que sean menos de 1, para no dividir por cero ni dar un ritmo
+ * absurdamente alto si la fecha límite es este mismo mes.
+ */
+function calcularAhorroMensualNecesario(restante: number, fechaLimite: string): number {
+  const hoy = new Date(hoyISO() + "T00:00:00");
+  const limite = new Date(fechaLimite + "T00:00:00");
+  const mesesRestantes = Math.max(
+    1,
+    Math.ceil((limite.getFullYear() - hoy.getFullYear()) * 12 + (limite.getMonth() - hoy.getMonth()) + 1)
+  );
+  return restante / mesesRestantes;
+}
 
 export function SavingsGoalManager() {
   const { metasAhorro, aportaciones, ajustes, agregarMeta, eliminarMeta, agregarAportacion, eliminarAportacion } =
     useFinanzas();
 
   const [formMetaAbierto, setFormMetaAbierto] = useState(false);
+  const [modoMeta, setModoMeta] = useState<"cantidad" | "fecha">("cantidad");
   const [nombreMeta, setNombreMeta] = useState("");
   const [objetivoMeta, setObjetivoMeta] = useState("");
   const [fechaLimiteMeta, setFechaLimiteMeta] = useState("");
@@ -25,15 +43,23 @@ export function SavingsGoalManager() {
 
   const [metaExpandida, setMetaExpandida] = useState<string | null>(null);
 
+  const objetivoValido = parseFloat(objetivoMeta.replace(",", "."));
+  const previewAhorroMensual =
+    modoMeta === "fecha" && fechaLimiteMeta && objetivoValido > 0
+      ? calcularAhorroMensualNecesario(objetivoValido, fechaLimiteMeta)
+      : null;
+
   async function manejarCrearMeta() {
     const objetivo = parseFloat(objetivoMeta.replace(",", "."));
     if (!nombreMeta.trim() || !objetivo || objetivo <= 0) return;
+    if (modoMeta === "fecha" && !fechaLimiteMeta) return;
     await agregarMeta({
       nombre: nombreMeta.trim(),
       objetivo,
-      fechaLimite: fechaLimiteMeta || undefined,
+      fechaLimite: modoMeta === "fecha" ? fechaLimiteMeta : undefined,
     });
     setFormMetaAbierto(false);
+    setModoMeta("cantidad");
     setNombreMeta("");
     setObjetivoMeta("");
     setFechaLimiteMeta("");
@@ -118,6 +144,20 @@ export function SavingsGoalManager() {
                     </div>
                     <Progress valor={porcentaje} color={conseguido ? "var(--ingreso)" : "var(--accent)"} />
 
+                    {!conseguido && meta.fechaLimite && (
+                      <p className="text-xs text-[var(--muted)]">
+                        Ahorra{" "}
+                        <strong className="font-mono-tabular text-[var(--accent)]">
+                          {formatearMoneda(
+                            calcularAhorroMensualNecesario(meta.objetivo - ahorrado, meta.fechaLimite),
+                            ajustes.moneda
+                          )}
+                          /mes
+                        </strong>{" "}
+                        para lograrlo antes del {formatearFecha(meta.fechaLimite)}
+                      </p>
+                    )}
+
                     <div className="flex items-center justify-between">
                       <button
                         onClick={() => setMetaExpandida(expandida ? null : meta.id)}
@@ -170,19 +210,65 @@ export function SavingsGoalManager() {
             value={nombreMeta}
             onChange={(e) => setNombreMeta(e.target.value)}
           />
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">¿Cómo quieres definirlo?</label>
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-2)] p-1">
+              {(
+                [
+                  { valor: "cantidad", etiqueta: "Cuánto ahorrar" },
+                  { valor: "fecha", etiqueta: "Cuánto tener y para cuándo" },
+                ] as const
+              ).map((opcion) => (
+                <button
+                  key={opcion.valor}
+                  onClick={() => setModoMeta(opcion.valor)}
+                  className={cn(
+                    "rounded-lg py-2 text-xs font-semibold transition-colors",
+                    modoMeta === opcion.valor
+                      ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                      : "text-[var(--muted)]"
+                  )}
+                >
+                  {opcion.etiqueta}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Input
             inputMode="decimal"
-            placeholder="Importe objetivo"
+            placeholder={modoMeta === "cantidad" ? "Importe a ahorrar" : "Importe que quieres tener"}
             value={objetivoMeta}
             onChange={(e) => setObjetivoMeta(e.target.value)}
           />
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
-              Fecha límite <span className="text-[var(--muted)]">(opcional)</span>
-            </label>
-            <Input type="date" value={fechaLimiteMeta} onChange={(e) => setFechaLimiteMeta(e.target.value)} />
-          </div>
-          <Button className="w-full" onClick={manejarCrearMeta}>
+
+          {modoMeta === "fecha" && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Fecha límite</label>
+              <Input type="date" value={fechaLimiteMeta} onChange={(e) => setFechaLimiteMeta(e.target.value)} />
+              {previewAhorroMensual !== null && (
+                <p className="mt-1.5 text-xs text-[var(--muted)]">
+                  Necesitarás ahorrar{" "}
+                  <strong className="font-mono-tabular text-[var(--accent)]">
+                    {formatearMoneda(previewAhorroMensual, ajustes.moneda)}/mes
+                  </strong>{" "}
+                  para lograrlo.
+                </p>
+              )}
+            </div>
+          )}
+
+          <Button
+            className="w-full"
+            onClick={manejarCrearMeta}
+            disabled={
+              !nombreMeta.trim() ||
+              !objetivoValido ||
+              objetivoValido <= 0 ||
+              (modoMeta === "fecha" && !fechaLimiteMeta)
+            }
+          >
             Crear objetivo
           </Button>
         </div>

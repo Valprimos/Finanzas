@@ -141,7 +141,6 @@ function FormularioInterno({
         <div className="flex min-w-0 items-center gap-2">
           <span className="font-mono-tabular text-2xl text-[var(--muted)]">€</span>
           <input
-            autoFocus
             inputMode="decimal"
             placeholder="0,00"
             value={importe}
