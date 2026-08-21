@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import type { MouseHandlerDataParam } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useClicFuera } from "@/lib/use-clic-fuera";
 import type { Category, Transaction } from "@/lib/types";
 import { formatearMoneda } from "@/lib/format";
 
@@ -17,6 +18,10 @@ type Rebanada = { nombre: string; valor: number; color: string };
 
 export function GastoPorCategoria({ transacciones, categorias, moneda }: Props) {
   const [activo, setActivo] = useState<Rebanada | null>(null);
+  const contenedorRef = useRef<HTMLDivElement>(null);
+
+  useClicFuera(contenedorRef, () => setActivo(null));
+
   const mapaCategorias = new Map(categorias.map((c) => [c.id, c]));
   const totales = new Map<string, number>();
 
@@ -53,67 +58,70 @@ export function GastoPorCategoria({ transacciones, categorias, moneda }: Props) 
   // gráficos: leer el sector activo desde el estado del chart contenedor.
   function manejarInteraccion(estado: MouseHandlerDataParam) {
     const indice = Number(estado.activeIndex);
-    setActivo(Number.isNaN(indice) ? null : (datos[indice] ?? null));
+    if (!Number.isNaN(indice)) setActivo(datos[indice] ?? null);
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gasto por categoría</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
-        <ResponsiveContainer width="100%" height={260}>
-          <PieChart onClick={manejarInteraccion} onMouseMove={manejarInteraccion}>
-            <Pie
-              data={datos}
-              dataKey="valor"
-              nameKey="nombre"
-              innerRadius={62}
-              outerRadius={92}
-              paddingAngle={2}
-              strokeWidth={0}
-              cursor="pointer"
-            >
-              {datos.map((d, i) => (
-                <Cell key={i} fill={d.color} opacity={activo && activo.nombre !== d.nombre ? 0.35 : 1} />
-              ))}
-            </Pie>
-            {/* Sin tooltip flotante: el detalle se muestra abajo, en un
-                panel fijo que nunca se mueve ni cubre el gráfico. */}
-            <Tooltip content={() => null} />
-            <Legend
-              layout="vertical"
-              align="right"
-              verticalAlign="middle"
-              iconType="circle"
-              iconSize={8}
-              formatter={(valor) => <span style={{ color: "var(--muted)", fontSize: 12 }}>{valor}</span>}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+    <div ref={contenedorRef}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Gasto por categoría</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <ResponsiveContainer width="100%" height={260}>
+            <PieChart onClick={manejarInteraccion} onMouseMove={manejarInteraccion} onTouchMove={manejarInteraccion}>
+              <Pie
+                data={datos}
+                dataKey="valor"
+                nameKey="nombre"
+                innerRadius={62}
+                outerRadius={92}
+                paddingAngle={2}
+                strokeWidth={0}
+                cursor="pointer"
+              >
+                {datos.map((d, i) => (
+                  <Cell key={i} fill={d.color} opacity={activo && activo.nombre !== d.nombre ? 0.35 : 1} />
+                ))}
+              </Pie>
+              {/* Sin tooltip flotante: el detalle se muestra abajo, en un
+                  panel fijo que nunca se mueve ni cubre el gráfico, pero se
+                  actualiza en vivo mientras arrastras el dedo por él. */}
+              <Tooltip content={() => null} />
+              <Legend
+                layout="vertical"
+                align="right"
+                verticalAlign="middle"
+                iconType="circle"
+                iconSize={8}
+                formatter={(valor) => <span style={{ color: "var(--muted)", fontSize: 12 }}>{valor}</span>}
+              />
+            </PieChart>
+          </ResponsiveContainer>
 
-        <div className="mt-3 flex min-h-[52px] items-center justify-between gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm">
-          {activo ? (
-            <>
-              <span className="flex min-w-0 items-center gap-2 truncate">
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: activo.color }} />
-                <span className="truncate">{activo.nombre}</span>
-              </span>
-              <span className="shrink-0 font-mono-tabular font-semibold">
-                {formatearMoneda(activo.valor, moneda)}
-                <span className="ml-1.5 text-[var(--muted)]">
-                  ({Math.round((activo.valor / total) * 100)}%)
+          <div className="mt-3 flex min-h-[52px] items-center justify-between gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm">
+            {activo ? (
+              <>
+                <span className="flex min-w-0 items-center gap-2 truncate">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: activo.color }} />
+                  <span className="truncate">{activo.nombre}</span>
                 </span>
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-[var(--muted)]">Total gastado</span>
-              <span className="font-mono-tabular font-semibold">{formatearMoneda(total, moneda)}</span>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+                <span className="shrink-0 font-mono-tabular font-semibold">
+                  {formatearMoneda(activo.valor, moneda)}
+                  <span className="ml-1.5 text-[var(--muted)]">
+                    ({Math.round((activo.valor / total) * 100)}%)
+                  </span>
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-[var(--muted)]">Total gastado</span>
+                <span className="font-mono-tabular font-semibold">{formatearMoneda(total, moneda)}</span>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
