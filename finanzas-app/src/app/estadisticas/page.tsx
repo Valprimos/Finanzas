@@ -6,6 +6,7 @@ import { GastoPorCategoria } from "@/components/charts/gasto-por-categoria";
 import { IngresosVsGastos } from "@/components/charts/ingresos-vs-gastos";
 import { TopCategorias } from "@/components/top-categorias";
 import { CalendarioGastos } from "@/components/calendario-gastos";
+import { GastosHormiga } from "@/components/gastos-hormiga";
 
 export default function PaginaEstadisticas() {
   const { transacciones, categorias, ajustes } = useFinanzas();
@@ -28,6 +29,8 @@ export default function PaginaEstadisticas() {
         <TopCategorias transacciones={transacciones} categorias={categorias} moneda={ajustes.moneda} tipo="gasto" />
         <TopCategorias transacciones={transacciones} categorias={categorias} moneda={ajustes.moneda} tipo="ingreso" />
       </div>
+
+      <GastosHormiga transacciones={transacciones} categorias={categorias} moneda={ajustes.moneda} />
 
       <CalendarioGastos />
     </div>

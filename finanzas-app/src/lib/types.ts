@@ -47,6 +47,7 @@ export interface RecurringRule {
   fechaFin?: string;
   ultimaGeneracion?: string; // última fecha para la que se generó una transacción
   activo: boolean;
+  fechasOmitidas?: string[]; // ocurrencias puntuales saltadas, sin desactivar la regla
 }
 
 export interface Budget {
@@ -54,6 +55,7 @@ export interface Budget {
   categoriaId: string;
   limite: number;
   mes: string; // "todos" para presupuesto recurrente mensual, o "yyyy-MM" para un mes específico
+  acumularSobrante?: boolean; // el sobrante no gastado se suma al límite del mes siguiente
 }
 
 export interface AppSettings {
@@ -79,6 +81,26 @@ export interface SavingsContribution {
   nota?: string;
 }
 
+export type TipoDeuda = "me_deben" | "debo";
+
+export interface Debt {
+  id: string;
+  tipo: TipoDeuda;
+  persona: string;
+  importe: number; // importe original total
+  fecha: string; // ISO yyyy-MM-dd
+  notas?: string;
+  creadoEn: string;
+}
+
+export interface DebtPayment {
+  id: string;
+  deudaId: string;
+  importe: number;
+  fecha: string; // ISO yyyy-MM-dd
+  nota?: string;
+}
+
 export interface BackupData {
   version: number;
   exportadoEn: string;
@@ -89,5 +111,7 @@ export interface BackupData {
   recurrentes: RecurringRule[];
   metasAhorro: SavingsGoal[];
   aportaciones: SavingsContribution[];
+  deudas: Debt[];
+  pagosDeuda: DebtPayment[];
   ajustes: AppSettings;
 }

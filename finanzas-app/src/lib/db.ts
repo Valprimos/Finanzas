@@ -7,6 +7,8 @@ import type {
   RecurringRule,
   SavingsGoal,
   SavingsContribution,
+  Debt,
+  DebtPayment,
   AppSettings,
   BackupData,
 } from "./types";
@@ -26,6 +28,8 @@ const KEYS = {
   recurrentes: "finanzas:recurrentes",
   metasAhorro: "finanzas:metasAhorro",
   aportaciones: "finanzas:aportaciones",
+  deudas: "finanzas:deudas",
+  pagosDeuda: "finanzas:pagosDeuda",
   ajustes: "finanzas:ajustes",
 } as const;
 
@@ -91,6 +95,18 @@ export const db = {
   async setAportaciones(data: SavingsContribution[]): Promise<void> {
     return escribir(KEYS.aportaciones, data);
   },
+  async getDeudas(): Promise<Debt[]> {
+    return leer(KEYS.deudas, []);
+  },
+  async setDeudas(data: Debt[]): Promise<void> {
+    return escribir(KEYS.deudas, data);
+  },
+  async getPagosDeuda(): Promise<DebtPayment[]> {
+    return leer(KEYS.pagosDeuda, []);
+  },
+  async setPagosDeuda(data: DebtPayment[]): Promise<void> {
+    return escribir(KEYS.pagosDeuda, data);
+  },
   async getAjustes(defaultAjustes: AppSettings): Promise<AppSettings> {
     return leer(KEYS.ajustes, defaultAjustes);
   },
@@ -106,6 +122,8 @@ export const db = {
       recurrentes,
       metasAhorro,
       aportaciones,
+      deudas,
+      pagosDeuda,
       ajustes,
     ] = await Promise.all([
       this.getTransacciones(),
@@ -115,10 +133,12 @@ export const db = {
       this.getRecurrentes(),
       this.getMetasAhorro(),
       this.getAportaciones(),
+      this.getDeudas(),
+      this.getPagosDeuda(),
       get<AppSettings>(KEYS.ajustes),
     ]);
     return {
-      version: 2,
+      version: 3,
       exportadoEn: new Date().toISOString(),
       transacciones,
       categorias,
@@ -127,6 +147,8 @@ export const db = {
       recurrentes,
       metasAhorro,
       aportaciones,
+      deudas,
+      pagosDeuda,
       ajustes: ajustes ?? { moneda: "EUR", localeFormato: "es-ES", tema: "oscuro" },
     };
   },
@@ -139,6 +161,8 @@ export const db = {
       escribir(KEYS.recurrentes, data.recurrentes ?? []),
       escribir(KEYS.metasAhorro, data.metasAhorro ?? []),
       escribir(KEYS.aportaciones, data.aportaciones ?? []),
+      escribir(KEYS.deudas, data.deudas ?? []),
+      escribir(KEYS.pagosDeuda, data.pagosDeuda ?? []),
       escribir(KEYS.ajustes, data.ajustes),
     ]);
   },
