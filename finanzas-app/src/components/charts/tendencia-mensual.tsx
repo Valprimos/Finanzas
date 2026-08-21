@@ -42,6 +42,11 @@ export function TendenciaMensual({ transacciones, moneda }: Props) {
                 fontSize: 13,
               }}
               formatter={(valor) => formatearMoneda(Number(valor), moneda)}
+              // Recharts no respeta el orden en que se declaran las <Area> para
+              // el tooltip (por defecto sale Gastos antes que Ingresos, al
+              // revés que en el resto de la app) — se fuerza aquí para que
+              // siempre liste Ingresos primero.
+              itemSorter={(item) => (item.dataKey === "ingresos" ? 0 : 1)}
             />
             <Area type="monotone" dataKey="ingresos" stroke="var(--ingreso)" fill="url(#gradIngreso)" strokeWidth={2} name="Ingresos" />
             <Area type="monotone" dataKey="gastos" stroke="var(--gasto)" fill="url(#gradGasto)" strokeWidth={2} name="Gastos" />

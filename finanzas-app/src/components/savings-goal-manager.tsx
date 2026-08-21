@@ -28,8 +28,24 @@ function calcularAhorroMensualNecesario(restante: number, fechaLimite: string): 
 }
 
 export function SavingsGoalManager() {
-  const { metasAhorro, aportaciones, ajustes, agregarMeta, eliminarMeta, agregarAportacion, eliminarAportacion } =
-    useFinanzas();
+  const {
+    transacciones,
+    metasAhorro,
+    aportaciones,
+    ajustes,
+    agregarMeta,
+    eliminarMeta,
+    agregarAportacion,
+    eliminarAportacion,
+  } = useFinanzas();
+
+  // Con un único objetivo activo, su progreso se calcula solo a partir del
+  // saldo real (ingresos - gastos) y se actualiza automáticamente — no hace
+  // falta ir apuntando aportaciones a mano. En cuanto hay dos o más
+  // objetivos a la vez, la app no tiene forma de saber qué parte del saldo
+  // "pertenece" a cada uno, así que todos vuelven a aportaciones manuales.
+  const modoAutomatico = metasAhorro.length === 1;
+  const saldoActual = transacciones.reduce((s, t) => s + (t.tipo === "ingreso" ? t.importe : -t.importe), 0);
 
   const [formMetaAbierto, setFormMetaAbierto] = useState(false);
   const [modoMeta, setModoMeta] = useState<"cantidad" | "fecha">("cantidad");
@@ -93,8 +109,8 @@ export function SavingsGoalManager() {
           <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
             <PiggyBank size={28} className="text-[var(--muted)]" />
             <p className="text-sm text-[var(--muted)]">
-              Crea un objetivo (ej. &quot;2000 € para diciembre&quot;) y ve añadiendo aportaciones a mano cuando
-              apartes dinero.
+              Crea un objetivo (ej. &quot;2000 € para diciembre&quot;). Si es el único que tienes, su progreso se
+              calcula solo a partir de tu saldo; con varios a la vez, se añaden aportaciones a mano.
             </p>
           </CardContent>
         </Card>
@@ -107,7 +123,7 @@ export function SavingsGoalManager() {
               const aportacionesMeta = aportaciones
                 .filter((a) => a.metaId === meta.id)
                 .sort((a, b) => b.fecha.localeCompare(a.fecha));
-              const ahorrado = aportacionesMeta.reduce((s, a) => s + a.importe, 0);
+              const ahorrado = modoAutomatico ? Math.max(0, saldoActual) : aportacionesMeta.reduce((s, a) => s + a.importe, 0);
               const porcentaje = meta.objetivo > 0 ? (ahorrado / meta.objetivo) * 100 : 0;
               const conseguido = ahorrado >= meta.objetivo;
               const expandida = metaExpandida === meta.id;
@@ -158,20 +174,24 @@ export function SavingsGoalManager() {
                       </p>
                     )}
 
-                    <div className="flex items-center justify-between">
-                      <button
-                        onClick={() => setMetaExpandida(expandida ? null : meta.id)}
-                        className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
-                      >
-                        {aportacionesMeta.length} aportación{aportacionesMeta.length !== 1 ? "es" : ""}
-                        {aportacionesMeta.length > 0 ? (expandida ? " — ocultar" : " — ver") : ""}
-                      </button>
-                      <Button tamano="sm" variante="secundario" onClick={() => setMetaParaAportar(meta.id)}>
-                        <Plus size={14} /> Aportar
-                      </Button>
-                    </div>
+                    {modoAutomatico ? (
+                      <p className="text-xs text-[var(--muted)]">Se calcula solo, a partir de tu saldo actual.</p>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <button
+                          onClick={() => setMetaExpandida(expandida ? null : meta.id)}
+                          className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+                        >
+                          {aportacionesMeta.length} aportación{aportacionesMeta.length !== 1 ? "es" : ""}
+                          {aportacionesMeta.length > 0 ? (expandida ? " — ocultar" : " — ver") : ""}
+                        </button>
+                        <Button tamano="sm" variante="secundario" onClick={() => setMetaParaAportar(meta.id)}>
+                          <Plus size={14} /> Aportar
+                        </Button>
+                      </div>
+                    )}
 
-                    {expandida && aportacionesMeta.length > 0 && (
+                    {!modoAutomatico && expandida && aportacionesMeta.length > 0 && (
                       <ul className="space-y-1.5 border-t border-[var(--border)] pt-3">
                         {aportacionesMeta.map((a) => (
                           <li key={a.id} className="flex items-center justify-between text-xs">
