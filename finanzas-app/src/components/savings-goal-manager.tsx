@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { formatearMoneda, formatearFecha, hoyISO } from "@/lib/format";
+import { calcularAhorrado, esMetaAutomatica } from "@/lib/ahorro";
 import { cn } from "@/lib/utils";
 
 /**
@@ -38,14 +39,6 @@ export function SavingsGoalManager() {
     agregarAportacion,
     eliminarAportacion,
   } = useFinanzas();
-
-  // Con un único objetivo activo, su progreso se calcula solo a partir del
-  // saldo real (ingresos - gastos) y se actualiza automáticamente — no hace
-  // falta ir apuntando aportaciones a mano. En cuanto hay dos o más
-  // objetivos a la vez, la app no tiene forma de saber qué parte del saldo
-  // "pertenece" a cada uno, así que todos vuelven a aportaciones manuales.
-  const modoAutomatico = metasAhorro.length === 1;
-  const saldoActual = transacciones.reduce((s, t) => s + (t.tipo === "ingreso" ? t.importe : -t.importe), 0);
 
   const [formMetaAbierto, setFormMetaAbierto] = useState(false);
   const [modoMeta, setModoMeta] = useState<"cantidad" | "fecha">("cantidad");
@@ -109,8 +102,8 @@ export function SavingsGoalManager() {
           <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
             <PiggyBank size={28} className="text-[var(--muted)]" />
             <p className="text-sm text-[var(--muted)]">
-              Crea un objetivo (ej. &quot;2000 € para diciembre&quot;). Si es el único que tienes, su progreso se
-              calcula solo a partir de tu saldo; con varios a la vez, se añaden aportaciones a mano.
+              Crea un objetivo. Si eliges &quot;cuánto tener y para cuándo&quot; y es el único con fecha, su
+              progreso se calcula solo a partir de tu saldo; el resto se ahorra añadiendo aportaciones a mano.
             </p>
           </CardContent>
         </Card>
@@ -123,7 +116,8 @@ export function SavingsGoalManager() {
               const aportacionesMeta = aportaciones
                 .filter((a) => a.metaId === meta.id)
                 .sort((a, b) => b.fecha.localeCompare(a.fecha));
-              const ahorrado = modoAutomatico ? Math.max(0, saldoActual) : aportacionesMeta.reduce((s, a) => s + a.importe, 0);
+              const modoAutomatico = esMetaAutomatica(meta, metasAhorro);
+              const ahorrado = calcularAhorrado(meta, metasAhorro, aportaciones, transacciones);
               const porcentaje = meta.objetivo > 0 ? (ahorrado / meta.objetivo) * 100 : 0;
               const conseguido = ahorrado >= meta.objetivo;
               const expandida = metaExpandida === meta.id;
