@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FinanzasProvider } from "@/lib/store";
 import { AppShell } from "@/components/app-shell";
+import { SplashScreen } from "@/components/splash-screen";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable} antialiased`}>
         <ThemeProvider>
           <FinanzasProvider>
+            <SplashScreen />
             <AppShell>{children}</AppShell>
           </FinanzasProvider>
         </ThemeProvider>
