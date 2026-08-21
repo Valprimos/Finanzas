@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
-import { Search, ArrowUpDown } from "lucide-react";
+import { createElement, useMemo, useState, type ReactNode } from "react";
+import { Search, ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useFinanzas } from "@/lib/store";
 import { obtenerIcono } from "@/lib/iconos";
 import { formatearFecha, formatearMoneda } from "@/lib/format";
@@ -33,7 +35,7 @@ function CampoFiltro({
 type Orden = "fecha_desc" | "fecha_asc" | "importe_desc" | "importe_asc";
 
 export function TransactionList() {
-  const { transacciones, categorias, ajustes } = useFinanzas();
+  const { transacciones, categorias, cuentas, ajustes, eliminarTransaccion } = useFinanzas();
   const [busqueda, setBusqueda] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<"todos" | "gasto" | "ingreso">("todos");
   const [filtroCategoria, setFiltroCategoria] = useState("todas");
@@ -41,7 +43,10 @@ export function TransactionList() {
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
   const [orden, setOrden] = useState<Orden>("fecha_desc");
+  const [viendo, setViendo] = useState<Transaction | null>(null);
   const [editando, setEditando] = useState<Transaction | null>(null);
+
+  const mapaCuentas = useMemo(() => new Map(cuentas.map((c) => [c.id, c])), [cuentas]);
 
   const mapaCategorias = useMemo(() => new Map(categorias.map((c) => [c.id, c])), [categorias]);
 
@@ -160,7 +165,7 @@ export function TransactionList() {
               return (
                 <li key={t.id}>
                   <button
-                    onClick={() => setEditando(t)}
+                    onClick={() => setViendo(t)}
                     className="block w-full min-w-0 overflow-hidden px-4 py-3 text-left transition-colors hover:bg-[var(--surface-2)]"
                   >
                     {/* El layout va en un div interno, no en el propio <button>: Safari no
@@ -215,11 +220,118 @@ export function TransactionList() {
         )}
       </div>
 
+      {/* Tarjeta de detalle: al tocar una fila se ve todo completo, sin
+          truncar, antes de decidir si se quiere editar. */}
+      <Dialog abierto={!!viendo} onCerrar={() => setViendo(null)} titulo="Detalle del movimiento">
+        {viendo && (
+          <DetalleMovimiento
+            transaccion={viendo}
+            categoria={mapaCategorias.get(viendo.categoriaId)}
+            cuenta={viendo.cuentaId ? mapaCuentas.get(viendo.cuentaId) : undefined}
+            moneda={ajustes.moneda}
+            onEditar={() => {
+              setEditando(viendo);
+              setViendo(null);
+            }}
+            onEliminar={async () => {
+              await eliminarTransaccion(viendo.id);
+              setViendo(null);
+            }}
+          />
+        )}
+      </Dialog>
+
       <TransactionForm
         abierto={!!editando}
         onCerrar={() => setEditando(null)}
         transaccionExistente={editando ?? undefined}
       />
+    </div>
+  );
+}
+
+function DetalleMovimiento({
+  transaccion,
+  categoria,
+  cuenta,
+  moneda,
+  onEditar,
+  onEliminar,
+}: {
+  transaccion: Transaction;
+  categoria?: { nombre: string; color: string; icono: string };
+  cuenta?: { nombre: string };
+  moneda: string;
+  onEditar: () => void;
+  onEliminar: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+          style={{ background: `${categoria?.color ?? "#8892a4"}22`, color: categoria?.color ?? "#8892a4" }}
+        >
+          {createElement(obtenerIcono(categoria?.icono ?? ""), { size: 22 })}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="break-words text-base font-semibold">
+            {transaccion.descripcion || categoria?.nombre || "Movimiento"}
+          </p>
+          <p className="text-xs text-[var(--muted)]">{categoria?.nombre}</p>
+        </div>
+      </div>
+
+      <p
+        className={cn(
+          "font-mono-tabular text-3xl font-semibold",
+          transaccion.tipo === "ingreso" ? "text-[var(--ingreso)]" : "text-[var(--gasto)]"
+        )}
+      >
+        {transaccion.tipo === "ingreso" ? "+" : "−"}
+        {formatearMoneda(transaccion.importe, moneda).replace("-", "")}
+      </p>
+
+      <dl className="grid grid-cols-2 gap-3 rounded-xl bg-[var(--surface-2)] p-4 text-sm">
+        <div>
+          <dt className="text-xs text-[var(--muted)]">Fecha</dt>
+          <dd className="mt-0.5 font-medium">{formatearFecha(transaccion.fecha)}</dd>
+        </div>
+        {transaccion.metodoPago && (
+          <div>
+            <dt className="text-xs text-[var(--muted)]">Método de pago</dt>
+            <dd className="mt-0.5 font-medium">{transaccion.metodoPago}</dd>
+          </div>
+        )}
+        {cuenta && (
+          <div>
+            <dt className="text-xs text-[var(--muted)]">Cuenta</dt>
+            <dd className="mt-0.5 font-medium">{cuenta.nombre}</dd>
+          </div>
+        )}
+      </dl>
+
+      {transaccion.etiquetas && transaccion.etiquetas.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {transaccion.etiquetas.map((e) => (
+            <span
+              key={e}
+              className="rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-medium text-[var(--accent)]"
+            >
+              #{e}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="flex gap-2 pt-1">
+        <Button variante="peligro" tamano="md" onClick={onEliminar} aria-label="Eliminar movimiento">
+          <Trash2 size={16} />
+        </Button>
+        <Button variante="primario" tamano="md" className="flex-1" onClick={onEditar}>
+          <Pencil size={16} /> Editar
+        </Button>
+      </div>
     </div>
   );
 }

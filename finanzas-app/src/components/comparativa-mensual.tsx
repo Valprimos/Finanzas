@@ -21,6 +21,15 @@ export function ComparativaMensual({ transacciones, mesKey, moneda }: Props) {
 
   return (
     <div className="animar-entrada grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {c.cambioIngresosPct !== null && (
+        <FilaComparativa
+          etiqueta="Ingresos"
+          actual={c.ingresosActual}
+          cambioPct={c.cambioIngresosPct}
+          subeEsMalo={false}
+          moneda={moneda}
+        />
+      )}
       {c.cambioGastosPct !== null && (
         <FilaComparativa
           etiqueta="Gastos"
@@ -28,15 +37,6 @@ export function ComparativaMensual({ transacciones, mesKey, moneda }: Props) {
           cambioPct={c.cambioGastosPct}
           // en gastos, subir es "malo" (rojo) y bajar es "bueno" (verde)
           subeEsMalo
-          moneda={moneda}
-        />
-      )}
-      {c.cambioIngresosPct !== null && (
-        <FilaComparativa
-          etiqueta="Ingresos"
-          actual={c.ingresosActual}
-          cambioPct={c.cambioIngresosPct}
-          subeEsMalo={false}
           moneda={moneda}
         />
       )}
