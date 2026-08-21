@@ -13,6 +13,7 @@ import {
   Sun,
   MoreHorizontal,
   PiggyBank,
+  HandCoins,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, type ReactNode } from "react";
@@ -34,6 +35,7 @@ const NAV = [
 // Estas se acceden desde el botón "Más" en móvil (no caben todas en la barra inferior)
 const NAV_MAS = [
   { href: "/ahorro", label: "Ahorro", icon: PiggyBank, color: "#E05C97" },
+  { href: "/deudas", label: "Deudas", icon: HandCoins, color: "#57C4E0" },
   { href: "/categorias", label: "Categorías", icon: Shapes, color: "#B085E0" },
   { href: "/ajustes", label: "Ajustes", icon: Settings, color: "#8A93A6" },
 ];

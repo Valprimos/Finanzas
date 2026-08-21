@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import type { MouseHandlerDataParam } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import type { Transaction } from "@/lib/types";
 import { formatearMoneda } from "@/lib/format";
@@ -13,9 +14,11 @@ interface Props {
 }
 
 type Serie = "ingresos" | "gastos";
+type Punto = { mes: string; ingresos: number; gastos: number };
 
 export function IngresosVsGastos({ transacciones, moneda }: Props) {
   const [seleccion, setSeleccion] = useState<Serie | null>(null);
+  const [activo, setActivo] = useState<Punto | null>(null);
 
   const mapa = new Map<string, { ingresos: number; gastos: number }>();
   for (const t of transacciones) {
@@ -25,7 +28,7 @@ export function IngresosVsGastos({ transacciones, moneda }: Props) {
     else actual.gastos += t.importe;
     mapa.set(clave, actual);
   }
-  const datos = Array.from(mapa.entries())
+  const datos: Punto[] = Array.from(mapa.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-6)
     .map(([clave, v]) => ({
@@ -33,13 +36,21 @@ export function IngresosVsGastos({ transacciones, moneda }: Props) {
       ...v,
     }));
 
+  function manejarInteraccion(estado: MouseHandlerDataParam) {
+    // activeIndex llega como string ("0"), no como number, en esta versión
+    // de recharts — hay que convertirlo antes de indexar el array.
+    const indice = Number(estado.activeIndex);
+    if (!Number.isNaN(indice)) setActivo(datos[indice] ?? null);
+  }
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Ingresos vs. gastos</CardTitle>
-          {/* Pulsar una etiqueta filtra a esa sola serie; pulsar el área del
-              gráfico (onClick en el propio BarChart) vuelve a mostrar ambas. */}
+          {/* Pulsar una etiqueta o una barra filtra a esa sola serie; pulsar
+              el área del gráfico (onClick en el propio BarChart) vuelve a
+              mostrar ambas. */}
           <div className="flex items-center gap-3 text-xs">
             <button
               onClick={() => setSeleccion(seleccion === "ingresos" ? null : "ingresos")}
@@ -69,21 +80,19 @@ export function IngresosVsGastos({ transacciones, moneda }: Props) {
           <BarChart
             data={datos}
             margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            onClick={() => setSeleccion(null)}
+            onClick={(estado) => {
+              setSeleccion(null);
+              manejarInteraccion(estado);
+            }}
+            onMouseMove={manejarInteraccion}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="mes" stroke="var(--muted)" fontSize={12} tickLine={false} axisLine={false} />
             <YAxis stroke="var(--muted)" fontSize={12} tickLine={false} axisLine={false} width={40} />
-            <Tooltip
-              cursor={{ fill: "var(--surface-2)" }}
-              contentStyle={{
-                background: "var(--surface-2)",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                fontSize: 13,
-              }}
-              formatter={(valor) => formatearMoneda(Number(valor), moneda)}
-            />
+            {/* Sin tooltip flotante: tapa el gráfico y en móvil sigue al dedo
+                de forma incómoda. El detalle se muestra abajo, en un panel
+                fijo que nunca se mueve ni cubre nada. */}
+            <Tooltip content={() => null} cursor={{ fill: "var(--surface-2)" }} />
             {seleccion !== "gastos" && (
               <Bar
                 dataKey="ingresos"
@@ -91,12 +100,13 @@ export function IngresosVsGastos({ transacciones, moneda }: Props) {
                 radius={[6, 6, 0, 0]}
                 name="Ingresos"
                 cursor="pointer"
-                onClick={(_, __, evento) => {
+                onClick={(_, indice, evento) => {
                   // Sin esto, el clic en la barra también burbujea hasta el
                   // onClick del BarChart y lo resetea a "ambas" justo
                   // después de seleccionar — se anularían entre sí.
                   evento.stopPropagation();
-                  setSeleccion((actual) => (actual === "ingresos" ? null : "ingresos"));
+                  setActivo(datos[indice] ?? null);
+                  setSeleccion((actualSel) => (actualSel === "ingresos" ? null : "ingresos"));
                 }}
               />
             )}
@@ -107,14 +117,37 @@ export function IngresosVsGastos({ transacciones, moneda }: Props) {
                 radius={[6, 6, 0, 0]}
                 name="Gastos"
                 cursor="pointer"
-                onClick={(_, __, evento) => {
+                onClick={(_, indice, evento) => {
                   evento.stopPropagation();
-                  setSeleccion((actual) => (actual === "gastos" ? null : "gastos"));
+                  setActivo(datos[indice] ?? null);
+                  setSeleccion((actualSel) => (actualSel === "gastos" ? null : "gastos"));
                 }}
               />
             )}
           </BarChart>
         </ResponsiveContainer>
+
+        <div className="mt-3 flex min-h-[52px] items-center justify-between gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm">
+          {activo ? (
+            <>
+              <span className="shrink-0 capitalize text-[var(--muted)]">{activo.mes}</span>
+              <div className="flex items-center gap-4">
+                {seleccion !== "gastos" && (
+                  <span className="font-mono-tabular font-semibold text-[var(--ingreso)]">
+                    {formatearMoneda(activo.ingresos, moneda)}
+                  </span>
+                )}
+                {seleccion !== "ingresos" && (
+                  <span className="font-mono-tabular font-semibold text-[var(--gasto)]">
+                    {formatearMoneda(activo.gastos, moneda)}
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <span className="text-[var(--muted)]">Toca el gráfico para ver el detalle de un mes</span>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

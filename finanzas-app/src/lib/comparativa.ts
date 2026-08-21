@@ -5,7 +5,7 @@ export interface ComparativaMensual {
   gastosAnterior: number;
   ingresosActual: number;
   ingresosAnterior: number;
-  cambioGastosPct: number | null; // null si no hay datos del mes anterior para comparar
+  cambioGastosPct: number | null; // null si no hay datos del periodo anterior para comparar
   cambioIngresosPct: number | null;
 }
 
@@ -15,6 +15,12 @@ export function mesAnteriorKey(mesKey: string): string {
   const fecha = new Date(Number(anioStr), Number(mesStr) - 1, 1);
   fecha.setMonth(fecha.getMonth() - 1);
   return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Dado "2026-08", devuelve "2025-08": el mismo mes del año anterior. */
+export function mesAnioAnteriorKey(mesKey: string): string {
+  const [anioStr, mesStr] = mesKey.split("-");
+  return `${Number(anioStr) - 1}-${mesStr}`;
 }
 
 function totalesDelMes(transacciones: Transaction[], mesKey: string) {
@@ -28,13 +34,13 @@ function totalesDelMes(transacciones: Transaction[], mesKey: string) {
   return { gastos, ingresos };
 }
 
-export function calcularComparativaMensual(
+function construirComparativa(
   transacciones: Transaction[],
-  mesKey: string
+  mesKey: string,
+  mesAnteriorKeyCalculado: string
 ): ComparativaMensual {
-  const anterior = mesAnteriorKey(mesKey);
   const actual = totalesDelMes(transacciones, mesKey);
-  const previo = totalesDelMes(transacciones, anterior);
+  const previo = totalesDelMes(transacciones, mesAnteriorKeyCalculado);
 
   const cambioGastosPct = previo.gastos > 0 ? ((actual.gastos - previo.gastos) / previo.gastos) * 100 : null;
   const cambioIngresosPct =
@@ -48,4 +54,13 @@ export function calcularComparativaMensual(
     cambioGastosPct,
     cambioIngresosPct,
   };
+}
+
+export function calcularComparativaMensual(transacciones: Transaction[], mesKey: string): ComparativaMensual {
+  return construirComparativa(transacciones, mesKey, mesAnteriorKey(mesKey));
+}
+
+/** Igual que calcularComparativaMensual, pero contra el mismo mes del año pasado. */
+export function calcularComparativaAnual(transacciones: Transaction[], mesKey: string): ComparativaMensual {
+  return construirComparativa(transacciones, mesKey, mesAnioAnteriorKey(mesKey));
 }

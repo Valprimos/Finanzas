@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertTriangle, Gauge } from "lucide-react";
 import { useFinanzas } from "@/lib/store";
 import { SummaryCards } from "@/components/summary-cards";
 import { ComparativaMensual } from "@/components/comparativa-mensual";
@@ -10,6 +10,7 @@ import { TendenciaMensual } from "@/components/charts/tendencia-mensual";
 import { GastoPorCategoria } from "@/components/charts/gasto-por-categoria";
 import { TopCategorias } from "@/components/top-categorias";
 import { calcularEstadoPresupuestos } from "@/lib/presupuestos";
+import { calcularProyeccionFinMes } from "@/lib/estadisticas";
 import { formatearMoneda, formatearFecha, hoyISO } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +58,8 @@ export default function PaginaInicio() {
   );
 
   const mapaCategorias = useMemo(() => new Map(categorias.map((c) => [c.id, c])), [categorias]);
+
+  const proyeccionFinMes = modoPeriodo === "mes" ? calcularProyeccionFinMes(gastos, mesKey) : null;
 
   if (!cargado) {
     return <div className="py-24 text-center text-sm text-[var(--muted)]">Cargando tus datos…</div>;
@@ -138,6 +141,16 @@ export default function PaginaInicio() {
           que no se corresponde con el periodo elegido. */}
       {modoPeriodo === "mes" && <ComparativaMensual transacciones={transacciones} mesKey={mesKey} moneda={ajustes.moneda} />}
 
+      {proyeccionFinMes !== null && (
+        <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm">
+          <Gauge size={16} className="shrink-0 text-[var(--accent)]" />
+          <span>
+            A este ritmo, este mes gastarás{" "}
+            <strong className="font-mono-tabular">{formatearMoneda(proyeccionFinMes, ajustes.moneda)}</strong>
+          </span>
+        </div>
+      )}
+
       {modoPeriodo === "mes" && estadoPresupuestos.length > 0 && (
         <div className="space-y-2">
           {estadoPresupuestos.map((e) => {
@@ -155,7 +168,7 @@ export default function PaginaInicio() {
                 <span className="flex-1">
                   <strong>{categoria?.nombre}</strong>{" "}
                   {e.excedido
-                    ? `ha superado el presupuesto (${formatearMoneda(e.gastado, ajustes.moneda)} de ${formatearMoneda(e.presupuesto.limite, ajustes.moneda)})`
+                    ? `ha superado el presupuesto (${formatearMoneda(e.gastado, ajustes.moneda)} de ${formatearMoneda(e.limiteEfectivo, ajustes.moneda)})`
                     : `está cerca del límite (${Math.round(e.porcentaje)}% usado)`}
                 </span>
               </Link>

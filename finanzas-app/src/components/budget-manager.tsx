@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { useFinanzas } from "@/lib/store";
 import { calcularEstadoPresupuestos } from "@/lib/presupuestos";
 import { formatearMoneda, mesActualKey } from "@/lib/format";
@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export function BudgetManager() {
   const { presupuestos, transacciones, categorias, ajustes, agregarPresupuesto, eliminarPresupuesto } =
@@ -19,6 +20,7 @@ export function BudgetManager() {
   const [formAbierto, setFormAbierto] = useState(false);
   const [categoriaId, setCategoriaId] = useState("");
   const [limite, setLimite] = useState("");
+  const [acumularSobrante, setAcumularSobrante] = useState(false);
 
   const categoriasGasto = categorias.filter((c) => c.tipo === "gasto");
   const mapaCategorias = new Map(categorias.map((c) => [c.id, c]));
@@ -27,10 +29,11 @@ export function BudgetManager() {
   async function manejarCrear() {
     const valor = parseFloat(limite.replace(",", "."));
     if (!categoriaId || !valor || valor <= 0) return;
-    await agregarPresupuesto({ categoriaId, limite: valor, mes: "todos" });
+    await agregarPresupuesto({ categoriaId, limite: valor, mes: "todos", acumularSobrante });
     setFormAbierto(false);
     setCategoriaId("");
     setLimite("");
+    setAcumularSobrante(false);
   }
 
   const categoriasSinPresupuesto = categoriasGasto.filter(
@@ -72,7 +75,13 @@ export function BudgetManager() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{categoria?.nombre}</p>
                       <p className="font-mono-tabular text-xs text-[var(--muted)]">
-                        {formatearMoneda(e.gastado, ajustes.moneda)} de {formatearMoneda(e.presupuesto.limite, ajustes.moneda)}
+                        {formatearMoneda(e.gastado, ajustes.moneda)} de {formatearMoneda(e.limiteEfectivo, ajustes.moneda)}
+                        {e.sobranteMesAnterior > 0 && (
+                          <span className="text-[var(--ingreso)]">
+                            {" "}
+                            (+{formatearMoneda(e.sobranteMesAnterior, ajustes.moneda)} del mes pasado)
+                          </span>
+                        )}
                       </p>
                     </div>
                     <button
@@ -84,6 +93,17 @@ export function BudgetManager() {
                     </button>
                   </div>
                   <Progress valor={e.porcentaje} color={color} />
+                  {e.ritmo !== "sin-datos" && (
+                    <div
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-medium",
+                        e.ritmo === "bien" ? "text-[var(--ingreso)]" : "text-[#f5a524]"
+                      )}
+                    >
+                      {e.ritmo === "bien" ? <TrendingDown size={13} /> : <TrendingUp size={13} />}
+                      {e.ritmo === "bien" ? "Vas bien de ritmo" : "Vas rápido para lo que queda de mes"}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -108,6 +128,20 @@ export function BudgetManager() {
             <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Límite mensual</label>
             <Input inputMode="decimal" placeholder="0,00" value={limite} onChange={(e) => setLimite(e.target.value)} />
           </div>
+          <label className="flex items-center gap-2.5 rounded-xl bg-[var(--surface-2)] p-3 text-sm">
+            <input
+              type="checkbox"
+              checked={acumularSobrante}
+              onChange={(e) => setAcumularSobrante(e.target.checked)}
+              className="h-4 w-4 accent-[var(--accent)]"
+            />
+            <span>
+              Acumular el sobrante al mes siguiente
+              <span className="block text-xs text-[var(--muted)]">
+                Si no gastas todo el límite, la diferencia se suma al presupuesto del mes que viene.
+              </span>
+            </span>
+          </label>
           <Button className="w-full" onClick={manejarCrear}>
             Crear presupuesto
           </Button>

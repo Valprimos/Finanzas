@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import type { MouseHandlerDataParam } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import type { Transaction } from "@/lib/types";
 import { formatearMoneda } from "@/lib/format";
@@ -13,10 +14,19 @@ interface Props {
 }
 
 type Serie = "ingresos" | "gastos";
+type Punto = { mes: string; ingresos: number; gastos: number };
 
 export function TendenciaMensual({ transacciones, moneda }: Props) {
   const datos = construirSerieMensual(transacciones);
   const [seleccion, setSeleccion] = useState<Serie | null>(null);
+  const [activo, setActivo] = useState<Punto | null>(null);
+
+  function manejarInteraccion(estado: MouseHandlerDataParam) {
+    // activeIndex llega como string ("0"), no como number, en esta versión
+    // de recharts — hay que convertirlo antes de indexar el array.
+    const indice = Number(estado.activeIndex);
+    if (!Number.isNaN(indice)) setActivo(datos[indice] ?? null);
+  }
 
   return (
     <Card>
@@ -54,7 +64,11 @@ export function TendenciaMensual({ transacciones, moneda }: Props) {
           <AreaChart
             data={datos}
             margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            onClick={() => setSeleccion(null)}
+            onClick={(estado) => {
+              setSeleccion(null);
+              manejarInteraccion(estado);
+            }}
+            onMouseMove={manejarInteraccion}
           >
             <defs>
               <linearGradient id="gradIngreso" x1="0" y1="0" x2="0" y2="1">
@@ -69,20 +83,10 @@ export function TendenciaMensual({ transacciones, moneda }: Props) {
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="mes" stroke="var(--muted)" fontSize={12} tickLine={false} axisLine={false} />
             <YAxis stroke="var(--muted)" fontSize={12} tickLine={false} axisLine={false} width={40} />
-            <Tooltip
-              contentStyle={{
-                background: "var(--surface-2)",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                fontSize: 13,
-              }}
-              formatter={(valor) => formatearMoneda(Number(valor), moneda)}
-              // Recharts no respeta el orden en que se declaran las <Area> para
-              // el tooltip (por defecto sale Gastos antes que Ingresos, al
-              // revés que en el resto de la app) — se fuerza aquí para que
-              // siempre liste Ingresos primero.
-              itemSorter={(item) => (item.dataKey === "ingresos" ? 0 : 1)}
-            />
+            {/* Sin tooltip flotante: tapa el gráfico y en móvil sigue al dedo
+                de forma incómoda. El detalle se muestra abajo, en un panel
+                fijo que nunca se mueve ni cubre nada. */}
+            <Tooltip content={() => null} cursor={{ stroke: "var(--border)" }} />
             {seleccion !== "gastos" && (
               <Area
                 type="monotone"
@@ -105,12 +109,34 @@ export function TendenciaMensual({ transacciones, moneda }: Props) {
             )}
           </AreaChart>
         </ResponsiveContainer>
+
+        <div className="mt-3 flex min-h-[52px] items-center justify-between gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm">
+          {activo ? (
+            <>
+              <span className="shrink-0 capitalize text-[var(--muted)]">{activo.mes}</span>
+              <div className="flex items-center gap-4">
+                {seleccion !== "gastos" && (
+                  <span className="font-mono-tabular font-semibold text-[var(--ingreso)]">
+                    {formatearMoneda(activo.ingresos, moneda)}
+                  </span>
+                )}
+                {seleccion !== "ingresos" && (
+                  <span className="font-mono-tabular font-semibold text-[var(--gasto)]">
+                    {formatearMoneda(activo.gastos, moneda)}
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <span className="text-[var(--muted)]">Toca el gráfico para ver el detalle de un mes</span>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
 }
 
-function construirSerieMensual(transacciones: Transaction[]) {
+function construirSerieMensual(transacciones: Transaction[]): Punto[] {
   const mapa = new Map<string, { ingresos: number; gastos: number }>();
   for (const t of transacciones) {
     const clave = t.fecha.slice(0, 7);
