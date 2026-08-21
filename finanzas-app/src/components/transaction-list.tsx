@@ -161,44 +161,50 @@ export function TransactionList() {
                 <li key={t.id}>
                   <button
                     onClick={() => setEditando(t)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-2)]"
+                    className="block w-full min-w-0 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-2)]"
                   >
-                    <div
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                      style={{ background: `${categoria?.color ?? "#8892a4"}22`, color: categoria?.color ?? "#8892a4" }}
-                    >
-                      <Icono size={18} />
+                    {/* El layout va en un div interno, no en el propio <button>: Safari no
+                        reparte bien min-width:0 a los hijos flex cuando el contenedor flex
+                        es un <button>, y la descripción larga empujaba el importe fuera de
+                        la pantalla. */}
+                    <div className="flex w-full min-w-0 items-center gap-3">
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                        style={{ background: `${categoria?.color ?? "#8892a4"}22`, color: categoria?.color ?? "#8892a4" }}
+                      >
+                        <Icono size={18} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {t.descripcion || categoria?.nombre || "Movimiento"}
+                        </p>
+                        <p className="truncate text-xs text-[var(--muted)]">
+                          {categoria?.nombre} · {formatearFecha(t.fecha)}
+                          {t.metodoPago ? ` · ${t.metodoPago}` : ""}
+                        </p>
+                        {t.etiquetas && t.etiquetas.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {t.etiquetas.map((e) => (
+                              <span
+                                key={e}
+                                className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent)]"
+                              >
+                                #{e}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        className={cn(
+                          "font-mono-tabular shrink-0 text-sm font-semibold",
+                          t.tipo === "ingreso" ? "text-[var(--ingreso)]" : "text-[var(--gasto)]"
+                        )}
+                      >
+                        {t.tipo === "ingreso" ? "+" : "−"}
+                        {formatearMoneda(t.importe, ajustes.moneda).replace("-", "")}
+                      </span>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {t.descripcion || categoria?.nombre || "Movimiento"}
-                      </p>
-                      <p className="truncate text-xs text-[var(--muted)]">
-                        {categoria?.nombre} · {formatearFecha(t.fecha)}
-                        {t.metodoPago ? ` · ${t.metodoPago}` : ""}
-                      </p>
-                      {t.etiquetas && t.etiquetas.length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {t.etiquetas.map((e) => (
-                            <span
-                              key={e}
-                              className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent)]"
-                            >
-                              #{e}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <span
-                      className={cn(
-                        "font-mono-tabular shrink-0 text-sm font-semibold",
-                        t.tipo === "ingreso" ? "text-[var(--ingreso)]" : "text-[var(--gasto)]"
-                      )}
-                    >
-                      {t.tipo === "ingreso" ? "+" : "−"}
-                      {formatearMoneda(t.importe, ajustes.moneda).replace("-", "")}
-                    </span>
                   </button>
                 </li>
               );
