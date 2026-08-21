@@ -164,8 +164,6 @@ export default function PaginaInicio() {
         </div>
       )}
 
-      <SavingsGoalCard metas={metasAhorro} aportaciones={aportaciones} moneda={ajustes.moneda} />
-
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <TendenciaMensual transacciones={transacciones} moneda={ajustes.moneda} />
@@ -182,6 +180,13 @@ export default function PaginaInicio() {
           tipo="ingreso"
         />
       </div>
+
+      <SavingsGoalCard
+        metas={metasAhorro}
+        aportaciones={aportaciones}
+        transacciones={transacciones}
+        moneda={ajustes.moneda}
+      />
     </div>
   );
 }

@@ -5,23 +5,23 @@ import { PiggyBank } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { formatearMoneda, formatearFecha } from "@/lib/format";
-import type { SavingsGoal, SavingsContribution } from "@/lib/types";
+import { calcularAhorrado } from "@/lib/ahorro";
+import type { SavingsGoal, SavingsContribution, Transaction } from "@/lib/types";
 
 interface Props {
   metas: SavingsGoal[];
   aportaciones: SavingsContribution[];
+  transacciones: Transaction[];
   moneda: string;
 }
 
-export function SavingsGoalCard({ metas, aportaciones, moneda }: Props) {
+export function SavingsGoalCard({ metas, aportaciones, transacciones, moneda }: Props) {
   if (metas.length === 0) return null;
 
   // En el dashboard mostramos solo la meta más reciente para no saturar;
   // el resto se ven todas en /ahorro.
   const meta = [...metas].sort((a, b) => b.creadoEn.localeCompare(a.creadoEn))[0];
-  const ahorrado = aportaciones
-    .filter((a) => a.metaId === meta.id)
-    .reduce((suma, a) => suma + a.importe, 0);
+  const ahorrado = calcularAhorrado(meta, metas, aportaciones, transacciones);
   const porcentaje = meta.objetivo > 0 ? (ahorrado / meta.objetivo) * 100 : 0;
   const conseguido = ahorrado >= meta.objetivo;
 
