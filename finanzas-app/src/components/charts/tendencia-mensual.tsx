@@ -1,26 +1,61 @@
 "use client";
 
+import { useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import type { Transaction } from "@/lib/types";
 import { formatearMoneda } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 interface Props {
   transacciones: Transaction[];
   moneda: string;
 }
 
+type Serie = "ingresos" | "gastos";
+
 export function TendenciaMensual({ transacciones, moneda }: Props) {
   const datos = construirSerieMensual(transacciones);
+  const [seleccion, setSeleccion] = useState<Serie | null>(null);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Evolución mensual</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Evolución mensual</CardTitle>
+          {/* Pulsar una etiqueta filtra a esa sola serie; pulsar el área del
+              gráfico (onClick en el propio AreaChart) vuelve a mostrar ambas. */}
+          <div className="flex items-center gap-3 text-xs">
+            <button
+              onClick={() => setSeleccion(seleccion === "ingresos" ? null : "ingresos")}
+              className={cn(
+                "flex items-center gap-1.5 font-medium transition-opacity",
+                seleccion === "gastos" ? "opacity-40" : "opacity-100"
+              )}
+            >
+              <span className="h-2 w-2 rounded-full" style={{ background: "var(--ingreso)" }} />
+              Ingresos
+            </button>
+            <button
+              onClick={() => setSeleccion(seleccion === "gastos" ? null : "gastos")}
+              className={cn(
+                "flex items-center gap-1.5 font-medium transition-opacity",
+                seleccion === "ingresos" ? "opacity-40" : "opacity-100"
+              )}
+            >
+              <span className="h-2 w-2 rounded-full" style={{ background: "var(--gasto)" }} />
+              Gastos
+            </button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="pt-4">
         <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={datos} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <AreaChart
+            data={datos}
+            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            onClick={() => setSeleccion(null)}
+          >
             <defs>
               <linearGradient id="gradIngreso" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--ingreso)" stopOpacity={0.35} />
@@ -48,8 +83,26 @@ export function TendenciaMensual({ transacciones, moneda }: Props) {
               // siempre liste Ingresos primero.
               itemSorter={(item) => (item.dataKey === "ingresos" ? 0 : 1)}
             />
-            <Area type="monotone" dataKey="ingresos" stroke="var(--ingreso)" fill="url(#gradIngreso)" strokeWidth={2} name="Ingresos" />
-            <Area type="monotone" dataKey="gastos" stroke="var(--gasto)" fill="url(#gradGasto)" strokeWidth={2} name="Gastos" />
+            {seleccion !== "gastos" && (
+              <Area
+                type="monotone"
+                dataKey="ingresos"
+                stroke="var(--ingreso)"
+                fill="url(#gradIngreso)"
+                strokeWidth={2}
+                name="Ingresos"
+              />
+            )}
+            {seleccion !== "ingresos" && (
+              <Area
+                type="monotone"
+                dataKey="gastos"
+                stroke="var(--gasto)"
+                fill="url(#gradGasto)"
+                strokeWidth={2}
+                name="Gastos"
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </CardContent>
