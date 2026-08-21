@@ -11,9 +11,19 @@ import { TransactionForm } from "@/components/transaction-form";
 import type { Transaction } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-function CampoFiltro({ etiqueta, htmlFor, children }: { etiqueta: string; htmlFor?: string; children: ReactNode }) {
+function CampoFiltro({
+  etiqueta,
+  htmlFor,
+  className,
+  children,
+}: {
+  etiqueta: string;
+  htmlFor?: string;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
-    <label htmlFor={htmlFor} className="flex min-w-0 flex-col gap-1">
+    <label htmlFor={htmlFor} className={cn("flex min-w-0 flex-col gap-1", className)}>
       <span className="text-xs font-medium text-[var(--muted)]">{etiqueta}</span>
       {children}
     </label>
@@ -79,7 +89,7 @@ export function TransactionList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+      <div className="flex flex-col gap-3 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
           <Input
@@ -89,17 +99,17 @@ export function TransactionList() {
             className="pl-9"
           />
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
           <CampoFiltro etiqueta="Tipo">
             <Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value as typeof filtroTipo)}>
-              <option value="todos">Todos los tipos</option>
+              <option value="todos">Todos</option>
               <option value="gasto">Gastos</option>
               <option value="ingreso">Ingresos</option>
             </Select>
           </CampoFiltro>
           <CampoFiltro etiqueta="Categoría">
             <Select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
-              <option value="todas">Todas las categorías</option>
+              <option value="todas">Todas</option>
               {categorias.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nombre}
@@ -110,7 +120,7 @@ export function TransactionList() {
           {todasLasEtiquetas.length > 0 && (
             <CampoFiltro etiqueta="Etiqueta">
               <Select value={filtroEtiqueta} onChange={(e) => setFiltroEtiqueta(e.target.value)}>
-                <option value="todas">Todas las etiquetas</option>
+                <option value="todas">Todas</option>
                 {todasLasEtiquetas.map((e) => (
                   <option key={e} value={e}>
                     #{e}
@@ -125,12 +135,12 @@ export function TransactionList() {
           <CampoFiltro etiqueta="Hasta" htmlFor="filtro-hasta">
             <Input id="filtro-hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
           </CampoFiltro>
-          <CampoFiltro etiqueta="Ordenar por">
+          <CampoFiltro etiqueta="Ordenar por" className="col-span-2 lg:col-span-1">
             <Select value={orden} onChange={(e) => setOrden(e.target.value as Orden)}>
-              <option value="fecha_desc">Fecha (recientes)</option>
-              <option value="fecha_asc">Fecha (antiguas)</option>
-              <option value="importe_desc">Importe (mayor)</option>
-              <option value="importe_asc">Importe (menor)</option>
+              <option value="fecha_desc">Recientes</option>
+              <option value="fecha_asc">Antiguas</option>
+              <option value="importe_desc">Importe mayor</option>
+              <option value="importe_asc">Importe menor</option>
             </Select>
           </CampoFiltro>
         </div>
