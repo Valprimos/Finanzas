@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Search, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -10,6 +10,15 @@ import { formatearFecha, formatearMoneda } from "@/lib/format";
 import { TransactionForm } from "@/components/transaction-form";
 import type { Transaction } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+function CampoFiltro({ etiqueta, htmlFor, children }: { etiqueta: string; htmlFor?: string; children: ReactNode }) {
+  return (
+    <label htmlFor={htmlFor} className="flex min-w-0 flex-col gap-1">
+      <span className="text-xs font-medium text-[var(--muted)]">{etiqueta}</span>
+      {children}
+    </label>
+  );
+}
 
 type Orden = "fecha_desc" | "fecha_asc" | "importe_desc" | "importe_asc";
 
@@ -80,38 +89,50 @@ export function TransactionList() {
             className="pl-9"
           />
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-          <Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value as typeof filtroTipo)}>
-            <option value="todos">Todos los tipos</option>
-            <option value="gasto">Gastos</option>
-            <option value="ingreso">Ingresos</option>
-          </Select>
-          <Select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
-            <option value="todas">Todas las categorías</option>
-            {categorias.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre}
-              </option>
-            ))}
-          </Select>
-          {todasLasEtiquetas.length > 0 && (
-            <Select value={filtroEtiqueta} onChange={(e) => setFiltroEtiqueta(e.target.value)}>
-              <option value="todas">Todas las etiquetas</option>
-              {todasLasEtiquetas.map((e) => (
-                <option key={e} value={e}>
-                  #{e}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <CampoFiltro etiqueta="Tipo">
+            <Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value as typeof filtroTipo)}>
+              <option value="todos">Todos los tipos</option>
+              <option value="gasto">Gastos</option>
+              <option value="ingreso">Ingresos</option>
+            </Select>
+          </CampoFiltro>
+          <CampoFiltro etiqueta="Categoría">
+            <Select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
+              <option value="todas">Todas las categorías</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
                 </option>
               ))}
             </Select>
+          </CampoFiltro>
+          {todasLasEtiquetas.length > 0 && (
+            <CampoFiltro etiqueta="Etiqueta">
+              <Select value={filtroEtiqueta} onChange={(e) => setFiltroEtiqueta(e.target.value)}>
+                <option value="todas">Todas las etiquetas</option>
+                {todasLasEtiquetas.map((e) => (
+                  <option key={e} value={e}>
+                    #{e}
+                  </option>
+                ))}
+              </Select>
+            </CampoFiltro>
           )}
-          <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} title="Desde" />
-          <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} title="Hasta" />
-          <Select value={orden} onChange={(e) => setOrden(e.target.value as Orden)}>
-            <option value="fecha_desc">Fecha (recientes)</option>
-            <option value="fecha_asc">Fecha (antiguas)</option>
-            <option value="importe_desc">Importe (mayor)</option>
-            <option value="importe_asc">Importe (menor)</option>
-          </Select>
+          <CampoFiltro etiqueta="Desde" htmlFor="filtro-desde">
+            <Input id="filtro-desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+          </CampoFiltro>
+          <CampoFiltro etiqueta="Hasta" htmlFor="filtro-hasta">
+            <Input id="filtro-hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+          </CampoFiltro>
+          <CampoFiltro etiqueta="Ordenar por">
+            <Select value={orden} onChange={(e) => setOrden(e.target.value as Orden)}>
+              <option value="fecha_desc">Fecha (recientes)</option>
+              <option value="fecha_asc">Fecha (antiguas)</option>
+              <option value="importe_desc">Importe (mayor)</option>
+              <option value="importe_asc">Importe (menor)</option>
+            </Select>
+          </CampoFiltro>
         </div>
       </div>
 
